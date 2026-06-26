@@ -43,7 +43,8 @@ const config = {
     const list = [];
     let id = 0;
     for (let floor = 1; floor <= 4; floor++) {
-      for (let room = 1; room <= 14; room++) {
+      const startRoom = (floor === 1) ? 1 : 0;
+      for (let room = startRoom; room <= 14; room++) {
         id++;
         const roomStr = String(room).padStart(2, '0');
         list.push({ id, name: `${floor}${roomStr}호`, address: id, enabled: true });
