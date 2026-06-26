@@ -1,6 +1,7 @@
 let devices = [];
 let selectedDevice = null;
 let pendingControl = {};
+let currentFloor = 1;
 let ws = null;
 
 const MODE_LABELS = { auto: '자동', cool: '냉방', dry: '제습', fan: '송풍', heat: '난방' };
@@ -10,6 +11,9 @@ function init() {
   connectWebSocket();
   fetchDevices();
   document.getElementById('refreshAll').addEventListener('click', fetchDevices);
+  document.querySelectorAll('.floor-tab').forEach(el => {
+    el.addEventListener('click', () => switchFloor(parseInt(el.dataset.floor)));
+  });
 }
 
 function connectWebSocket() {
@@ -42,6 +46,18 @@ function updateConnectionBadge(connected) {
   }
 }
 
+function getFloor(name) {
+  return parseInt(name[0]);
+}
+
+function switchFloor(floor) {
+  currentFloor = floor;
+  document.querySelectorAll('.floor-tab').forEach(el => {
+    el.classList.toggle('active', parseInt(el.dataset.floor) === floor);
+  });
+  renderGrid();
+}
+
 async function fetchDevices() {
   try {
     const grid = document.getElementById('deviceGrid');
@@ -66,7 +82,13 @@ function renderGrid() {
   const grid = document.getElementById('deviceGrid');
   grid.innerHTML = '';
 
-  devices.forEach(d => {
+  const filtered = devices.filter(d => getFloor(d.name) === currentFloor);
+  const info = document.getElementById('floorInfo');
+  const first = filtered[0];
+  const last = filtered[filtered.length - 1];
+  info.textContent = `${first?.name}~${last?.name} · ${filtered.length}대`;
+
+  filtered.forEach(d => {
     const card = document.createElement('div');
     card.className = `device-card${d.power === 'on' ? ' power-on' : ''}`;
     card.dataset.id = d.id;
@@ -105,47 +127,55 @@ function renderGrid() {
 
 function updateDeviceState(data) {
   const idx = devices.findIndex(d => d.id === data.id);
-  if (idx >= 0) {
-    devices[idx] = { ...devices[idx], ...data };
-    const cards = document.querySelectorAll('.device-card');
-    if (cards[idx]) {
-      const d = devices[idx];
-      const wasPowerOn = cards[idx].classList.contains('power-on');
+  if (idx < 0) return;
+  devices[idx] = { ...devices[idx], ...data };
+  const d = devices[idx];
 
-      cards[idx].className = `device-card${d.power === 'on' ? ' power-on' : ''}`;
-      cards[idx].dataset.id = d.id;
+  const card = document.querySelector(`.device-card[data-id="${data.id}"]`);
+  if (card) {
+    card.className = `device-card${d.power === 'on' ? ' power-on' : ''}`;
+    card.dataset.id = d.id;
 
-      if (d.online === false && !d.power) {
-        cards[idx].innerHTML = `
-          <div class="card-online">
-            <svg viewBox="0 0 24 24" width="40" height="40">
-              <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" fill="currentColor" opacity="0.3"/>
-            </svg>
-            <span>연결할 수 없음</span>
-          </div>
-        `;
-      } else {
-        cards[idx].innerHTML = `
-          <div class="card-header">
-            <span class="card-room-name">${d.name}</span>
-            <span class="card-power-indicator ${d.power === 'on' ? 'on' : ''}"></span>
-          </div>
-          <div class="card-temp-display">
-            <span class="card-temp-value">${d.targetTemp || '--'}</span>
-            <span class="card-temp-unit">°C</span>
-          </div>
-          <div class="card-current-temp">실내 ${d.currentTemp || '--'}°C</div>
-          <div class="card-details">
-            <span class="card-badge ${d.power === 'on' ? 'power-on' : ''}">${MODE_LABELS[d.mode] || d.mode || '--'}</span>
-            <span class="card-badge">풍량 ${FAN_LABELS[d.fanSpeed] || d.fanSpeed || '--'}</span>
-          </div>
-        `;
+    if (d.online === false && !d.power) {
+      card.innerHTML = `
+        <div class="card-offline">
+          <svg viewBox="0 0 24 24" width="40" height="40">
+            <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" fill="currentColor" opacity="0.3"/>
+          </svg>
+          <span>연결할 수 없음</span>
+        </div>
+      `;
+    } else {
+      card.innerHTML = `
+        <div class="card-header">
+          <span class="card-room-name">${d.name}</span>
+          <span class="card-power-indicator ${d.power === 'on' ? 'on' : ''}"></span>
+        </div>
+        <div class="card-temp-display">
+          <span class="card-temp-value">${d.targetTemp || '--'}</span>
+          <span class="card-temp-unit">°C</span>
+        </div>
+        <div class="card-current-temp">실내 ${d.currentTemp || '--'}°C</div>
+        <div class="card-details">
+          <span class="card-badge ${d.power === 'on' ? 'power-on' : ''}">${MODE_LABELS[d.mode] || d.mode || '--'}</span>
+          <span class="card-badge">풍량 ${FAN_LABELS[d.fanSpeed] || d.fanSpeed || '--'}</span>
+        </div>
+      `;
+    }
+  } else {
+    if (d.name && getFloor(d.name) === currentFloor) {
+      const grid = document.getElementById('deviceGrid');
+      const pos = devices.filter(x => getFloor(x.name) === currentFloor).findIndex(x => x.id === d.id);
+      if (pos >= 0) {
+        renderGrid();
+        return;
       }
     }
+  }
 
-    if (selectedDevice && selectedDevice.id === data.id) {
-      updateModal(devices[idx]);
-    }
+  if (selectedDevice && selectedDevice.id === data.id) {
+    const updated = devices.find(x => x.id === data.id);
+    if (updated) updateModal(updated);
   }
 }
 
