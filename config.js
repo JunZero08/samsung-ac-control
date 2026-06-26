@@ -6,11 +6,11 @@ const config = {
 
   connection: {
     // Type: 'mock' for simulation (no hardware), 'tcp' for serial-to-Ethernet gateway, 'serial' for direct RS-485 via USB
-    type: "mock",
+    type: "tcp",
 
     // TCP serial gateway settings (for Waveshare or similar RS485-to-Ethernet converters)
     tcp: {
-      host: "192.168.1.100",
+      host: "211.225.181.218",
       port: 4196,
     },
 
