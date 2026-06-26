@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>삼성 에어컨 제어 시스템</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="header-content">
+      <div class="header-left">
+        <div class="logo">
+          <svg viewBox="0 0 40 40" width="32" height="32">
+            <rect x="4" y="8" width="32" height="24" rx="3" fill="none" stroke="currentColor" stroke-width="2"/>
+            <line x1="8" y1="14" x2="32" y2="14" stroke="currentColor" stroke-width="2"/>
+            <line x1="8" y1="20" x2="20" y2="20" stroke="currentColor" stroke-width="1.5"/>
+            <line x1="8" y1="26" x2="16" y2="26" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M26 20 L30 17 L30 23 Z" fill="currentColor"/>
+          </svg>
+        </div>
+        <div>
+          <h1>삼성 에어컨 제어</h1>
+          <span class="subtitle">Samsung Air Conditioner Control System</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="connection-badge" id="connectionBadge">
+          <span class="dot"></span> 연결됨
+        </span>
+        <button class="btn-icon" id="refreshAll" title="모두 새로고침">
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <path d="M17.65 6.35A7.96 7.96 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div id="deviceGrid" class="device-grid">
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>에어컨 정보를 불러오는 중...</p>
+    </div>
+  </div>
+
+  <div id="modalOverlay" class="modal-overlay hidden" onclick="closeModal(event)">
+    <div class="modal" id="controlModal">
+      <div class="modal-header">
+        <h2 id="modalRoomName">101호</h2>
+        <button class="btn-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="temp-display">
+          <div class="temp-current">
+            <span class="temp-label">설정 온도</span>
+            <div class="temp-control">
+              <button class="btn-temp" onclick="adjustTemp(-1)">&#8722;</button>
+              <span class="temp-value" id="modalTargetTemp">24</span>
+              <button class="btn-temp" onclick="adjustTemp(1)">&#43;</button>
+            </div>
+            <span class="temp-unit">&deg;C</span>
+          </div>
+          <div class="temp-room">
+            <span class="temp-label">실내 온도</span>
+            <span class="temp-value-sm" id="modalCurrentTemp">26&deg;C</span>
+          </div>
+        </div>
+
+        <div class="control-section">
+          <div class="section-label">전원</div>
+          <button class="btn-power" id="modalPowerBtn" onclick="togglePower()">
+            <span class="power-icon">&#9679;</span>
+            <span id="modalPowerText">켜기</span>
+          </button>
+        </div>
+
+        <div class="control-section">
+          <div class="section-label">운전 모드</div>
+          <div class="mode-grid" id="modalModes">
+            <button class="btn-mode" data-mode="auto" onclick="setMode('auto')">자동</button>
+            <button class="btn-mode active" data-mode="cool" onclick="setMode('cool')">냉방</button>
+            <button class="btn-mode" data-mode="dry" onclick="setMode('dry')">제습</button>
+            <button class="btn-mode" data-mode="fan" onclick="setMode('fan')">송풍</button>
+            <button class="btn-mode" data-mode="heat" onclick="setMode('heat')">난방</button>
+          </div>
+        </div>
+
+        <div class="control-section">
+          <div class="section-label">풍량</div>
+          <div class="fan-grid" id="modalFanSpeed">
+            <button class="btn-fan" data-fan="auto" onclick="setFan('auto')">자동</button>
+            <button class="btn-fan" data-fan="low" onclick="setFan('low')">약</button>
+            <button class="btn-fan active" data-fan="med" onclick="setFan('med')">중</button>
+            <button class="btn-fan" data-fan="high" onclick="setFan('high')">강</button>
+            <button class="btn-fan" data-fan="turbo" onclick="setFan('turbo')">터보</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <span class="last-update" id="modalLastUpdate">최근 업데이트: --</span>
+        <button class="btn-primary" onclick="sendControl()">적용</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+</div>
+
+<script src="js/script.js"></script>
+</body>
+</html>
